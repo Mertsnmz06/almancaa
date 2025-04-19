@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almanca Taşıma Araçları Oyunu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f4f8;
+    }
+    h2, h3 {
+      color: #333;
+    }
+    .container {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .column {
+      flex: 1;
+      padding: 10px;
+    }
+    .draggable {
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #fff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      cursor: grab;
+    }
+    .droppable {
+      padding: 10px;
+      margin: 10px 0;
+      border: 2px dashed #aaa;
+      min-height: 50px;
+      border-radius: 8px;
+      background-color: #e0e7ff;
+    }
+    .correct {
+      border: 2px solid green;
+      background-color: #c8e6c9;
+    }
+    .incorrect {
+      border: 2px solid red;
+      background-color: #ffcdd2;
+    }
+    .hidden {
+      display: none;
+    }
+    .button {
+      padding: 10px 20px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #4338ca;
+    }
+    #scoreboard {
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎮 Almanca Taşıma Araçları ile Cümle Eşleştirme</h2>
+  <p>Doğru taşıma aracını doğru cümleyle eşleştir. Seviyeler ilerledikçe zorlaşır!</p>
+
+  <div id="scoreboard">Puan: 0</div>
+  <div id="level-container"></div>
+  <button class="button" onclick="loadNextLevel()">Sonraki Etap</button>
+
+  <script>
+    const levels = [
+      {
+        vehicles: ['Auto', 'Bus', 'Zug'],
+        sentences: [
+          { text: 'Ich fahre gern mit dem ___ zur Schule.', answer: 'Bus' },
+          { text: 'Am Wochenende fahre ich mit dem ___ aufs Land.', answer: 'Auto' },
+          { text: 'Ich reise oft mit dem ___ in eine andere Stadt.', answer: 'Zug' }
+        ]
+      },
+      {
+        vehicles: ['Fahrrad', 'Flugzeug', 'Motorrad'],
+        sentences: [
+          { text: 'Ich fliege nach Berlin mit dem ___.', answer: 'Flugzeug' },
+          { text: 'Ich fahre täglich mit dem ___ zur Arbeit.', answer: 'Fahrrad' },
+          { text: 'Mein Vater fährt am Wochenende mit dem ___.', answer: 'Motorrad' }
+        ]
+      },
+      {
+        vehicles: ['Straßenbahn', 'Schiff', 'U-Bahn'],
+        sentences: [
+          { text: 'Ich fahre mit der ___ durch die Innenstadt.', answer: 'Straßenbahn' },
+          { text: 'Ich fahre mit dem ___ über den Fluss.', answer: 'Schiff' },
+          { text: 'Ich nehme die ___ zur Universität.', answer: 'U-Bahn' }
+        ]
+      },
+      {
+        vehicles: ['Helikopter', 'Taxi', 'Lastwagen'],
+        sentences: [
+          { text: 'Ich fliege mit dem ___ zur Insel.', answer: 'Helikopter' },
+          { text: 'Wir fahren mit dem ___ zum Flughafen.', answer: 'Taxi' },
+          { text: 'Der ___ transportiert schwere Güter.', answer: 'Lastwagen' }
+        ]
+      },
+      {
+        vehicles: ['Roller', 'Kutsche', 'Segelboot'],
+        sentences: [
+          { text: 'In der Altstadt fahren Touristen mit der ___.', answer: 'Kutsche' },
+          { text: 'Ich fahre im Sommer mit dem ___ auf dem See.', answer: 'Segelboot' },
+          { text: 'Die Kinder fahren mit dem ___ zur Schule.', answer: 'Roller' }
+        ]
+      }
+    ];
+
+    let currentLevel = 0;
+    let score = 0;
+    let audio = new SpeechSynthesisUtterance();
+    audio.lang = 'de-DE';
+
+    function updateScore(points) {
+      score += points;
+      document.getElementById('scoreboard').textContent = `Puan: ${score}`;
+    }
+
+    function speak(text) {
+      audio.text = text;
+      window.speechSynthesis.speak(audio);
+    }
+
+    function loadNextLevel() {
+      const container = document.getElementById('level-container');
+      container.innerHTML = '';
+
+      if (currentLevel >= levels.length) {
+        container.innerHTML = `<h3>Tebrikler! Tüm seviyeleri tamamladın! 🎉</h3><p>Toplam Puan: ${score}</p>`;
+        return;
+      }
+
+      const level = levels[currentLevel];
+      const containerDiv = document.createElement('div');
+      containerDiv.classList.add('container');
+
+      const vehiclesCol = document.createElement('div');
+      vehiclesCol.classList.add('column');
+      level.vehicles
+        .sort(() => Math.random() - 0.5)
+        .forEach(vehicle => {
+          const div = document.createElement('div');
+          div.classList.add('draggable');
+          div.setAttribute('draggable', 'true');
+          div.id = vehicle;
+          div.textContent = vehicle;
+          div.onclick = () => speak(vehicle);
+          vehiclesCol.appendChild(div);
+        });
+
+      const sentencesCol = document.createElement('div');
+      sentencesCol.classList.add('column');
+      level.sentences
+        .sort(() => Math.random() - 0.5)
+        .forEach(sentence => {
+          const div = document.createElement('div');
+          div.classList.add('droppable');
+          div.setAttribute('data-answer', sentence.answer);
+          div.textContent = sentence.text;
+          div.onclick = () => speak(sentence.text);
+          sentencesCol.appendChild(div);
+        });
+
+      containerDiv.appendChild(vehiclesCol);
+      containerDiv.appendChild(sentencesCol);
+      container.appendChild(containerDiv);
+
+      enableDragDrop();
+      currentLevel++;
+    }
+
+    function enableDragDrop() {
+      const draggables = document.querySelectorAll('.draggable');
+      const droppables = document.querySelectorAll('.droppable');
+
+      draggables.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text', e.target.id);
+        });
+      });
+
+      droppables.forEach(drop => {
+        drop.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+
+        drop.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const droppedId = e.dataTransfer.getData('text');
+          const draggedElement = document.getElementById(droppedId);
+          const correctAnswer = drop.getAttribute('data-answer');
+
+          if (drop.textContent.includes('___')) {
+            drop.textContent = drop.textContent.replace('___', droppedId);
+
+            if (droppedId === correctAnswer) {
+              drop.classList.add('correct');
+              drop.classList.remove('incorrect');
+              updateScore(10);
+            } else {
+              drop.classList.add('incorrect');
+              drop.classList.remove('correct');
+              updateScore(-5);
+            }
+
+            if (draggedElement) draggedElement.remove();
+          }
+        });
+      });
+    }
+
+    window.onload = loadNextLevel;
+  </script>
+</body>
+</html>
